@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jotchua Content — Meme Vault</title>
+  <link rel="icon" href="avatar.jpg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="kw-side" id="kw-side">
+      <div class="kw-head">
+        <h2>Keywords</h2>
+        <button type="button" class="kw-close" id="kw-close" aria-label="Close keywords">×</button>
+      </div>
+      <input id="kw-filter" type="search" placeholder="Filter keywords…" autocomplete="off" spellcheck="false">
+      <button type="button" class="kw-clear hidden" id="kw-clear">Clear keyword</button>
+      <div id="kw-list" class="kw-list" role="listbox" aria-label="Keyword filters"></div>
+    </aside>
+
+    <div class="stage">
+      <header class="top">
+        <div class="brand">
+          <img class="avatar" src="avatar.jpg" alt="Jotchua" width="48" height="48">
+          <div>
+            <h1>Jotchua Content</h1>
+            <p class="tagline">
+              Preview index for
+              <a href="https://t.me/jotchuacontent" target="_blank" rel="noreferrer">@jotchuacontent</a>
+              — originals live on Telegram
+            </p>
+          </div>
+        </div>
+        <label class="search-wrap">
+          <span class="sr-only">Search</span>
+          <input id="q" type="search" placeholder="Search id, author, date, caption, keywords…" autocomplete="off" spellcheck="false">
+        </label>
+        <div class="toolbar">
+          <button type="button" class="chip kw-open" id="kw-open">Keywords</button>
+          <div class="filters" id="filters" role="tablist" aria-label="Type filters"></div>
+        </div>
+        <p class="status" id="status"></p>
+      </header>
+
+      <main>
+        <div id="grid" class="grid"></div>
+        <p id="empty" class="empty hidden">
+          No matches. Try an author, a date like
+          <code>2026-07</code>, a type like <code>type:video</code>, a keyword from the sidebar, or an id like
+          <code>1244</code>.
+        </p>
+      </main>
+
+      <footer class="foot">
+        Previews only. Open a post on Telegram to view or download the original photo or video.
+      </footer>
+    </div>
+  </div>
+  <div class="kw-mask hidden" id="kw-mask"></div>
+
+  <div id="lightbox" class="lightbox hidden" role="dialog" aria-modal="true" aria-labelledby="lb-title">
+    <button class="lb-nav prev" id="lb-prev" aria-label="Previous">‹</button>
+    <div class="lb-card">
+      <div class="lb-media" id="lb-media"></div>
+      <div class="lb-meta">
+        <h2 id="lb-title"></h2>
+        <p class="lb-sub" id="lb-sub"></p>
+        <p class="lb-caption" id="lb-caption"></p>
+        <p class="lb-note">This is a preview. Full image or video is on Telegram.</p>
+        <div class="lb-keywords">
+          <h3>Keywords</h3>
+          <div id="lb-tags"></div>
+        </div>
+        <div class="lb-actions">
+          <a id="lb-telegram" class="btn primary" target="_blank" rel="noreferrer">Open original in Telegram</a>
+          <button type="button" class="btn" id="lb-copy">Copy Telegram link</button>
+        </div>
+      </div>
+    </div>
+    <button class="lb-nav next" id="lb-next" aria-label="Next">›</button>
+    <button class="lb-close" id="lb-close" aria-label="Close">×</button>
+  </div>
+
+  <script src="catalog.js"></script>
+  <script src="keywords.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
