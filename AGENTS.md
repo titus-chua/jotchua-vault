@@ -22,7 +22,9 @@ Weekly loop (no `update.sh`):
 5. Apply tags with `../venv/bin/python tools/update.py --apply path/to/tags.json` (skips ids that already have a caption or keywords). Any other Python (including `tools/build.py`) also uses `venv/bin/python`. Do not `pip install` on system Python.
 6. Stop. User checks, `git commit` / `git push` this `gallery/` repo, and deletes the Downloads export.
 
-Do **not**: overwrite `gallery/` or `venv/`, rewrite captions/keywords on existing ids, change `index.html` / `app.js` / `styles.css`, auto-commit, auto-push, or delete the Downloads folder.
+Do **not**: overwrite `gallery/` or `venv/`, rewrite captions/keywords on existing ids, restyle `index.html` / `app.js` / `styles.css`, auto-commit, auto-push, or delete the Downloads folder.
+
+`write_catalog` stamps `catalog.js?v=<max-id>` and `keywords.js?v=<max-id>` in `index.html` so a normal visit/reload gets new memes. The public Pages URL stays the repo root. Leave that stamp alone except via `update.py`.
 
 `tools/build.py` is the original full rebuild. Do not use it for weekly updates.
 

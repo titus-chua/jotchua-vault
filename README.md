@@ -86,6 +86,8 @@ git push
 
 Grok replaces the parent dump (`messages.html`, `photos/`, `video_files/`, `stickers/`, `files/`, Telegram `thumbs/`, `css/`, `js/`) with the new export. It never touches `gallery/` or `venv/`. It adds only **new Telegram message ids** to the catalog, with new thumbs. Captions and keywords already in the catalog stay as they are.
 
+The public site URL stays the same. Each update stamps `catalog.js?v=<newest-id>` inside the page so a normal visit or reload is not stuck on last week’s catalog. An old tab left open still needs a reload.
+
 Any Python uses the parent `venv/`, not system Python:
 
 ```bash

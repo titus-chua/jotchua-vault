@@ -19,6 +19,9 @@ from datetime import datetime
 from pathlib import Path
 
 GALLERY = Path(__file__).resolve().parent.parent
+SCRIPT_SRC_RE = re.compile(
+    r'(<script src="(?:catalog|keywords)\.js)(?:\?v=[^"]*)?("></script>)'
+)
 ROOT = GALLERY.parent
 HTML_PATH = ROOT / "messages.html"
 THUMB_DIR = GALLERY / "thumbs"
@@ -275,6 +278,28 @@ def write_catalog(items: list[dict]) -> None:
                     item["filename"],
                 ]
             )
+
+    stamp_asset_urls(items)
+
+
+def stamp_asset_urls(items: list[dict]) -> None:
+    """Point catalog.js / keywords.js at a new query so browsers fetch this week's files.
+
+    The public Pages URL stays the repo root. Only the script src inside index.html changes.
+    """
+    path = GALLERY / "index.html"
+    if not path.is_file():
+        return
+    version = str(max((item["id"] for item in items), default=0))
+    html = path.read_text(encoding="utf-8")
+    updated, count = SCRIPT_SRC_RE.subn(rf"\1?v={version}\2", html)
+    if count != 2:
+        print(
+            f"warning: stamped {count} catalog script tags in index.html, expected 2",
+            file=sys.stderr,
+        )
+    if updated != html:
+        path.write_text(updated, encoding="utf-8")
 
 
 def resolve_src(item: dict) -> Path | None:
