@@ -65,19 +65,16 @@ Open [http://localhost:8080/](http://localhost:8080/).
 
 Each item has a one-line caption plus 3 search keywords. The sidebar lists every keyword and its count. Click a keyword (or a tag in the lightbox) to filter.
 
-## Update after a new Telegram export
+## Weekly update
 
-Do this on your computer, next to the full export (`messages.html`, `photos/`, `video_files/`). Keep this `gallery/` folder beside those files.
+This `gallery/` folder is the website. The parent Documents folder is the latest full Telegram HTML dump, plus `gallery/` and `venv/`.
 
-```bash
-python3 tools/build.py
-```
+There is no `update.sh`. Do this:
 
-Run that from `gallery/`, or `python3 gallery/tools/build.py` from the export root.
-
-That refreshes `catalog.js`, `keywords.csv`, and `thumbs/`. Original Telegram files are only read.
-
-Then commit and push this folder:
+1. Telegram Desktop → export the **whole** `@jotchuacontent` history as HTML → `~/Downloads` (a `ChatExport_*` folder with `messages.html`).
+2. Open this project in Grok Build and say **update**.
+3. Check the new cards.
+4. Commit and push **this `gallery/` folder only**:
 
 ```bash
 git add .
@@ -85,4 +82,16 @@ git commit -m "Add new posts"
 git push
 ```
 
-Rebuilds keep captions and keywords for ids that already exist. New posts come in untagged until you fill them.
+5. Delete the export from Downloads.
+
+Grok replaces the parent dump (`messages.html`, `photos/`, `video_files/`, `stickers/`, `files/`, Telegram `thumbs/`, `css/`, `js/`) with the new export. It never touches `gallery/` or `venv/`. It adds only **new Telegram message ids** to the catalog, with new thumbs. Captions and keywords already in the catalog stay as they are.
+
+Any Python uses the parent `venv/`, not system Python:
+
+```bash
+../venv/bin/python tools/update.py
+```
+
+New posts get a one-line caption and 3 keywords (`tools/STYLE.md`). Same idea → reuse the common existing word (`sleeping` → `sleepy`). A new subject gets a new word (`antman` is `antman`, not `batman`).
+
+Do **not** run `tools/build.py` for weekly updates. That script is the original full rebuild.

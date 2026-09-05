@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Parse the Telegram HTML export into a gallery catalog. Does not modify the export."""
+"""Parse the Telegram HTML export into a gallery catalog. Does not modify the export.
+
+Weekly updates use update.py instead. Run both with the project venv:
+`../venv/bin/python tools/update.py` from gallery/.
+"""
 
 from __future__ import annotations
 
