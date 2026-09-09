@@ -25,6 +25,7 @@ SCRIPT_SRC_RE = re.compile(
 ROOT = GALLERY.parent
 HTML_PATH = ROOT / "messages.html"
 THUMB_DIR = GALLERY / "thumbs"
+MEDIA_DIR = GALLERY / "media"
 CHANNEL = "jotchuacontent"
 THUMB_MAX = 320
 THUMB_QUALITY = 50
@@ -302,6 +303,53 @@ def stamp_asset_urls(items: list[dict]) -> None:
         path.write_text(updated, encoding="utf-8")
 
 
+def media_rel(item: dict) -> str:
+    name = item.get("filename") or item.get("file") or ""
+    ext = Path(name).suffix.lower()
+    if not ext:
+        ext = Path(item.get("file") or "").suffix.lower()
+    return f"media/{item['id']}{ext}"
+
+
+def dump_file(item: dict) -> Path | None:
+    rel = item.get("file") or ""
+    if not rel:
+        return None
+    path = (GALLERY / rel).resolve()
+    return path if path.is_file() else None
+
+
+def copy_media(items: list[dict]) -> dict[str, int]:
+    """Copy dump originals into gallery/media/{id}{ext} and set item['src'].
+
+    Never writes to the Telegram dump. Never deletes existing media.
+    """
+    stats = {"ok": 0, "exists": 0, "skip": 0, "fail": 0}
+    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    for item in items:
+        rel = media_rel(item)
+        dest = GALLERY / rel
+        item["src"] = rel
+        src = dump_file(item)
+        if src is None:
+            if dest.is_file():
+                stats["exists"] += 1
+            else:
+                stats["skip"] += 1
+                print(f"media missing dump file for {item['id']}", file=sys.stderr)
+            continue
+        if dest.is_file() and dest.stat().st_size == src.stat().st_size:
+            stats["exists"] += 1
+            continue
+        try:
+            shutil.copy2(src, dest)
+            stats["ok"] += 1
+        except OSError as exc:
+            stats["fail"] += 1
+            print(f"media {item['id']}: {exc}", file=sys.stderr)
+    return stats
+
+
 def resolve_src(item: dict) -> Path | None:
     file_path = (GALLERY / item["file"]).resolve()
     export_thumb = (
@@ -380,6 +428,9 @@ def main() -> int:
         return 1
 
     apply_saved_tags(items)
+    print("copying originals...")
+    media_stats = copy_media(items)
+    print("media:", ", ".join(f"{k}={v}" for k, v in media_stats.items() if v))
     write_catalog(items)
     counts: dict[str, int] = {}
     for item in items:

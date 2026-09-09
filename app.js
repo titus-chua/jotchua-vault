@@ -34,6 +34,7 @@
     caption: document.getElementById("lb-caption"),
     tags: document.getElementById("lb-tags"),
     telegram: document.getElementById("lb-telegram"),
+    download: document.getElementById("lb-download"),
     copy: document.getElementById("lb-copy"),
     prev: document.getElementById("lb-prev"),
     next: document.getElementById("lb-next"),
@@ -55,7 +56,12 @@
     kwQuery: "",
     visible: catalog.slice(),
     index: -1,
+    mediaGen: 0,
+    copyTimer: 0,
   };
+
+  const IMAGE_TYPES = new Set(["photo", "sticker"]);
+  const IMAGE_EXT = /\.(png|jpe?g|gif|webp)$/i;
 
   function esc(value) {
     return String(value)
@@ -121,10 +127,47 @@
     return item.type;
   }
 
-  function telegramLabel(item) {
-    if (item.type === "video") return "Watch on Telegram";
-    if (item.type === "audio") return "Listen on Telegram";
-    return "Open original in Telegram";
+  function mediaUrl(item) {
+    if (!item?.src) return "";
+    return new URL(item.src, location.href).href;
+  }
+
+  function isCopyableImage(item) {
+    if (!item?.src) return false;
+    if (item.type === "video" || item.type === "audio" || item.type === "file") return false;
+    return IMAGE_TYPES.has(item.type) || IMAGE_EXT.test(item.src) || IMAGE_EXT.test(item.filename || "");
+  }
+
+  function resetCopyLabel() {
+    if (state.copyTimer) {
+      clearTimeout(state.copyTimer);
+      state.copyTimer = 0;
+    }
+    if (els.copy) els.copy.textContent = "Copy";
+  }
+
+  function stopMedia() {
+    state.mediaGen += 1;
+    for (const player of els.media.querySelectorAll("video, audio")) {
+      try {
+        player.pause();
+      } catch {
+        /* ignore */
+      }
+      player.removeAttribute("src");
+      for (const source of player.querySelectorAll("source")) source.remove();
+      try {
+        player.load();
+      } catch {
+        /* ignore */
+      }
+    }
+    for (const img of els.media.querySelectorAll("img")) {
+      img.onload = null;
+      img.onerror = null;
+      img.removeAttribute("src");
+    }
+    els.media.innerHTML = "";
   }
 
   function renderFilters() {
@@ -217,30 +260,73 @@
     document.body.style.overflow = "";
   }
 
-  function previewHTML(item) {
-    const href = esc(item.telegram);
-    const label = esc(telegramLabel(item));
-    if (item.type === "audio") {
-      return `<a class="lb-preview audio" href="${href}" target="_blank" rel="noreferrer">
-        <div class="placeholder">♪</div>
-        <span class="play-icon" aria-hidden="true">▶</span>
-        <span class="play-hint">${label}</span>
-      </a>`;
+  function markStage(stage, gen, status) {
+    if (gen !== state.mediaGen || !stage.isConnected) return;
+    stage.classList.remove("loading", "ready", "error");
+    stage.classList.add(status);
+  }
+
+  function bindStage(stage, gen, eventName) {
+    const media = stage.querySelector("img.lb-full, video, audio");
+    if (!media) {
+      markStage(stage, gen, "ready");
+      return;
     }
-    const src = encodeURI(item.thumb);
-    const extra = item.type === "video" ? " video" : "";
-    return `<a class="lb-preview${extra}" href="${href}" target="_blank" rel="noreferrer">
-      <img src="${src}" alt="">
-      <span class="play-icon" aria-hidden="true">▶</span>
-      <span class="play-hint">${label}</span>
-    </a>`;
+    const ok = () => markStage(stage, gen, "ready");
+    const err = () => markStage(stage, gen, "error");
+    media.addEventListener(eventName, ok, { once: true });
+    media.addEventListener("error", err, { once: true });
+    if (eventName === "load" && media.complete && media.naturalWidth) ok();
+    if (eventName === "canplay" && media.readyState >= 3) ok();
+  }
+
+  function mediaHTML(item) {
+    const thumb = encodeURI(item.thumb || "");
+    const src = item.src ? encodeURI(item.src) : "";
+    const name = esc(item.filename || `${item.id}`);
+    if (item.type === "audio") {
+      return `<div class="lb-stage audio loading">
+        <div class="placeholder" aria-hidden="true">♪</div>
+        ${src ? `<audio controls preload="auto" src="${src}"></audio>` : ""}
+        <p class="lb-loading">Loading audio…</p>
+        <p class="lb-error">Can't play here. Download or open in Telegram.</p>
+      </div>`;
+    }
+    if (item.type === "video") {
+      return `<div class="lb-stage video loading">
+        <video controls playsinline webkit-playsinline preload="auto" poster="${thumb}"${src ? ` src="${src}"` : ""}></video>
+        <p class="lb-loading">Loading video…</p>
+        <p class="lb-error">Can't play here. Download or open in Telegram.</p>
+      </div>`;
+    }
+    if (item.type === "file" || !src) {
+      return `<div class="lb-stage file ready">
+        ${item.thumb ? `<img class="lb-poster" src="${thumb}" alt="">` : `<div class="placeholder" aria-hidden="true">📄</div>`}
+        <button type="button" class="lb-file" data-download>${name}</button>
+      </div>`;
+    }
+    return `<div class="lb-stage image loading">
+      <img class="lb-poster" src="${thumb}" alt="" decoding="async">
+      <img class="lb-full" src="${src}" alt="" decoding="async">
+      <p class="lb-loading">Loading full image…</p>
+      <p class="lb-error">Can't show the full file here. Download or open in Telegram.</p>
+    </div>`;
   }
 
   function openAt(index) {
     if (index < 0 || index >= state.visible.length) return;
+    stopMedia();
+    resetCopyLabel();
     state.index = index;
+    const gen = state.mediaGen;
     const item = state.visible[index];
-    els.media.innerHTML = previewHTML(item);
+    els.media.innerHTML = mediaHTML(item);
+    const stage = els.media.querySelector(".lb-stage");
+    if (stage) {
+      if (item.type === "video" || item.type === "audio") bindStage(stage, gen, "canplay");
+      else if (item.type === "file" || !item.src) markStage(stage, gen, "ready");
+      else bindStage(stage, gen, "load");
+    }
     els.title.textContent = `${item.type} #${item.id}`;
     els.sub.textContent = [item.author, item.dateLabel].filter(Boolean).join(" · ");
     els.caption.textContent = item.caption || "";
@@ -251,17 +337,64 @@
     } else {
       els.tags.innerHTML = `<span class="tag placeholder">none yet</span>`;
     }
+    const url = mediaUrl(item);
+    if (els.download) {
+      els.download.href = url || item.telegram;
+      els.download.setAttribute("download", item.filename || String(item.id));
+      if (url) els.download.removeAttribute("target");
+      else {
+        els.download.target = "_blank";
+        els.download.removeAttribute("download");
+      }
+    }
     els.telegram.href = item.telegram;
-    els.telegram.textContent = telegramLabel(item);
+    els.telegram.textContent = "Open in Telegram";
     els.lightbox.classList.remove("hidden");
     location.hash = String(item.id);
   }
 
   function closeLightbox() {
+    stopMedia();
+    resetCopyLabel();
     state.index = -1;
     els.lightbox.classList.add("hidden");
-    els.media.innerHTML = "";
     if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+  }
+
+  function triggerDownload() {
+    if (els.download) els.download.click();
+  }
+
+  async function toPngBlob(blob) {
+    if (blob.type === "image/png") return blob;
+    const bitmap = await createImageBitmap(blob);
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close?.();
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((out) => (out ? resolve(out) : reject(new Error("toBlob"))), "image/png");
+    });
+  }
+
+  async function copyImage(item) {
+    const url = mediaUrl(item);
+    const blobPromise = fetch(url).then((res) => {
+      if (!res.ok) throw new Error("fetch");
+      return res.blob();
+    });
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        "image/png": blobPromise.then(toPngBlob),
+      }),
+    ]);
+  }
+
+  async function copyLink(item) {
+    const url = mediaUrl(item) || item.telegram;
+    await navigator.clipboard.writeText(url);
   }
 
   function syncUrl() {
@@ -338,14 +471,41 @@
   els.lightbox.addEventListener("click", (event) => {
     if (event.target === els.lightbox) closeLightbox();
   });
+  els.media.addEventListener("click", (event) => {
+    if (!event.target.closest("[data-download]")) return;
+    triggerDownload();
+  });
+
   els.copy.addEventListener("click", async () => {
     const item = state.visible[state.index];
     if (!item) return;
-    await navigator.clipboard.writeText(item.telegram);
-    els.copy.textContent = "Copied";
-    setTimeout(() => {
-      els.copy.textContent = "Copy Telegram link";
-    }, 1200);
+    let label = "Copy";
+    try {
+      if (isCopyableImage(item) && window.ClipboardItem && navigator.clipboard?.write) {
+        try {
+          await copyImage(item);
+          label = "Copied";
+        } catch {
+          await copyLink(item);
+          label = "Copied link";
+        }
+      } else if (navigator.clipboard?.writeText) {
+        await copyLink(item);
+        label = "Copied link";
+      } else {
+        triggerDownload();
+        label = "Downloading";
+      }
+    } catch {
+      triggerDownload();
+      label = "Downloading";
+    }
+    resetCopyLabel();
+    els.copy.textContent = label;
+    state.copyTimer = setTimeout(() => {
+      if (els.copy) els.copy.textContent = "Copy";
+      state.copyTimer = 0;
+    }, 1400);
   });
 
   document.addEventListener("keydown", (event) => {

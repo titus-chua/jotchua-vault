@@ -1,21 +1,20 @@
 # Jotchua meme vault
 
-Searchable **preview** gallery for [`@jotchuacontent`](https://t.me/jotchuacontent).
+Searchable gallery for [`@jotchuacontent`](https://t.me/jotchuacontent).
 
-This folder is the whole website. Thumbnails live here. Original photos and videos stay on Telegram — the site never hosts or links to them as files.
+This folder is the whole website. The grid uses thumbnails. Full photos, videos, stickers, and audio live in `media/` and load in the lightbox. Telegram still has the original posts.
 
 ## What visitors get
 
-- Grid of previews
+- Grid of thumbs (fast)
 - Left sidebar of all keywords with counts (click to filter)
 - Search by id, author, date, caption, keywords
-- Click a card → preview + **Open original in Telegram**
-
-They download or watch the real file in Telegram, not from this site.
+- Click a card → full file in the lightbox
+- **Download**, **Copy** (image to clipboard, or the file URL), **Open in Telegram**
 
 ## Publish on GitHub Pages
 
-Only this `gallery/` folder goes to GitHub. Do **not** upload `photos/`, `video_files/`, or the rest of the Telegram export.
+Only this `gallery/` folder goes to GitHub. That includes `thumbs/` and `media/`. Do **not** upload the parent dump (`photos/`, `video_files/`, `messages.html`, …).
 
 In this folder:
 
@@ -84,7 +83,7 @@ git push
 
 5. Delete the export from Downloads.
 
-Grok replaces the parent dump (`messages.html`, `photos/`, `video_files/`, `stickers/`, `files/`, Telegram `thumbs/`, `css/`, `js/`) with the new export. It never touches `gallery/` or `venv/`. It adds only **new Telegram message ids** to the catalog, with new thumbs. Captions and keywords already in the catalog stay as they are.
+Grok replaces the parent dump (`messages.html`, `photos/`, `video_files/`, `stickers/`, `files/`, Telegram `thumbs/`, `css/`, `js/`) with the new export. It never replaces `gallery/` or `venv/`. It adds only **new Telegram message ids** to the catalog, with new thumbs and a copy of each original in `media/`. Captions and keywords already in the catalog stay as they are.
 
 The public site URL stays the same. Each update stamps `catalog.js?v=<newest-id>` inside the page so a normal visit or reload is not stuck on last week’s catalog. An old tab left open still needs a reload.
 

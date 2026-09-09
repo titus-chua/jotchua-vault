@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Refresh the parent Telegram dump and add only new posts to the gallery.
 
-Never rewrite existing captions or keywords. Never touch gallery/ or venv/.
-Always run with the project venv (re-execs into it if needed).
+Never rewrite existing captions or keywords. Snapshot replace never touches
+gallery/ or venv/. New ids get thumbs plus a copy of the original into
+gallery/media/. Always run with the project venv (re-execs into it if needed).
 """
 
 from __future__ import annotations
@@ -28,7 +29,7 @@ def ensure_venv() -> None:
 
 ensure_venv()
 
-from build import ROOT, GALLERY, build_thumbs, parse_messages, write_catalog
+from build import ROOT, GALLERY, build_thumbs, copy_media, parse_messages, write_catalog
 
 DOWNLOADS = Path.home() / "Downloads"
 KEEP_NAMES = {"gallery", "venv", "AGENTS.md", ".git"}
@@ -199,6 +200,25 @@ def maybe_copy_avatar() -> None:
         shutil.copy2(src, dest)
 
 
+def media_pending(merged: list[dict], new_items: list[dict]) -> list[dict]:
+    new_ids = {item["id"] for item in new_items}
+    pending: list[dict] = []
+    for item in merged:
+        rel = item.get("src") or ""
+        dest = GALLERY / rel if rel else None
+        if item["id"] in new_ids or not rel or dest is None or not dest.is_file():
+            pending.append(item)
+    return pending
+
+
+def sync_media() -> None:
+    catalog = load_catalog()
+    stats = copy_media(catalog)
+    write_catalog(catalog)
+    print("media:", ", ".join(f"{k}={v}" for k, v in stats.items() if v))
+    print(f"catalog: {len(catalog)} items")
+
+
 def run_import(export_root: Path, dry_run: bool) -> int:
     existing = load_catalog()
     print(f"export: {export_root}")
@@ -239,6 +259,12 @@ def run_import(export_root: Path, dry_run: bool) -> int:
         stats = build_thumbs(new_items)
         print("thumbs:", ", ".join(f"{k}={v}" for k, v in stats.items() if v))
 
+    pending = media_pending(merged, new_items)
+    if pending:
+        print(f"copying originals for {len(pending)} ids...")
+        media_stats = copy_media(pending)
+        print("media:", ", ".join(f"{k}={v}" for k, v in media_stats.items() if v))
+
     write_catalog(merged)
     print(f"wrote {GALLERY / 'catalog.json'}")
     if new_items:
@@ -266,10 +292,19 @@ def main() -> int:
         action="store_true",
         help="Parse Downloads export and diff ids; do not copy or write",
     )
+    parser.add_argument(
+        "--sync-media",
+        action="store_true",
+        help="Copy dump originals into gallery/media for catalog rows missing src; do not retag",
+    )
     args = parser.parse_args()
 
     if args.apply:
         apply_tags(Path(args.apply).expanduser().resolve())
+        return 0
+
+    if args.sync_media:
+        sync_media()
         return 0
 
     export_root = find_export(args.export)

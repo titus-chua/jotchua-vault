@@ -14,15 +14,16 @@ Weekly loop (no `update.sh`):
    The script re-execs into the venv if you forget. That:
    - finds the newest export in Downloads
    - **replaces** the parent folder’s Telegram dump (`messages.html`, `photos/`, `video_files/`, …) with that export
-   - never touches `gallery/` or `venv/`
+   - never overwrites `gallery/` or `venv/` as a whole (it does write new thumbs, `gallery/media/` originals, and catalog files)
    - diffs Telegram message ids against `catalog.json`
    - makes thumbs for **new ids only**
+   - copies those originals into `gallery/media/{id}{ext}`
    - merges new rows into the catalog
 4. You write captions + 3 keywords for the new ids only. Follow `tools/STYLE.md`. If the batch is large, split across subagents; if it is small, do it yourself.
 5. Apply tags with `../venv/bin/python tools/update.py --apply path/to/tags.json` (skips ids that already have a caption or keywords). Any other Python (including `tools/build.py`) also uses `venv/bin/python`. Do not `pip install` on system Python.
 6. Stop. User checks, `git commit` / `git push` this `gallery/` repo, and deletes the Downloads export.
 
-Do **not**: overwrite `gallery/` or `venv/`, rewrite captions/keywords on existing ids, restyle `index.html` / `app.js` / `styles.css`, auto-commit, auto-push, or delete the Downloads folder.
+Do **not**: replace `gallery/` or `venv/` with the dump, rewrite captions/keywords on existing ids, restyle `index.html` / `app.js` / `styles.css` unless asked, auto-commit, auto-push, or delete the Downloads folder. Do not edit dump dirs except via the snapshot replace.
 
 `write_catalog` stamps `catalog.js?v=<max-id>` and `keywords.js?v=<max-id>` in `index.html` so a normal visit/reload gets new memes. The public Pages URL stays the repo root. Leave that stamp alone except via `update.py`.
 
