@@ -1,5 +1,28 @@
 [
   {
+    "id": 1806,
+    "type": "video",
+    "date": "2026-09-11T02:25:52",
+    "dateLabel": "11 September 2026, 02:25:52",
+    "author": "Titus",
+    "caption": "Blurry Jotchua snaps into a close-up stare",
+    "file": "../video_files/1806_jotchua-stare.mp4",
+    "filename": "1806_jotchua-stare.mp4",
+    "thumb": "thumbs/1806.jpg",
+    "exportThumb": "../thumbs/thumb_1806_0.jpg",
+    "width": 320,
+    "height": 320,
+    "duration": "0:04",
+    "telegram": "https://t.me/jotchuacontent/1806",
+    "keywords": [
+      "staring",
+      "closeup",
+      "blurry"
+    ],
+    "search": "1806 video titus 11 september 2026, 02:25:52 blurry jotchua snaps into a close-up stare 1806_jotchua-stare.mp4 #1806 staring closeup blurry",
+    "src": "media/1806.mp4"
+  },
+  {
     "id": 1803,
     "type": "photo",
     "date": "2026-09-09T01:36:56",

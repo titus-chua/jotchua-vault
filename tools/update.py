@@ -3,7 +3,8 @@
 
 Never rewrite existing captions or keywords. Snapshot replace never touches
 gallery/ or venv/. New ids get thumbs plus a copy of the original into
-gallery/media/. Always run with the project venv (re-execs into it if needed).
+gallery/media/. Skip vault-website posts (see skip_ids.txt). Always run with
+the project venv (re-execs into it if needed).
 """
 
 from __future__ import annotations
@@ -32,6 +33,7 @@ ensure_venv()
 from build import ROOT, GALLERY, build_thumbs, copy_media, parse_messages, write_catalog
 
 DOWNLOADS = Path.home() / "Downloads"
+SKIP_IDS_PATH = Path(__file__).resolve().parent / "skip_ids.txt"
 KEEP_NAMES = {"gallery", "venv", "AGENTS.md", ".git"}
 SNAPSHOT_DIRS = (
     "photos",
@@ -137,17 +139,38 @@ def refresh_snapshot(src: Path, dest: Path) -> None:
         print(f"replace {html_path.name}")
 
 
+def load_skip_ids() -> set[int]:
+    if not SKIP_IDS_PATH.is_file():
+        return set()
+    ids: set[int] = set()
+    for line in SKIP_IDS_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.split("#", 1)[0].strip()
+        if line.isdigit():
+            ids.add(int(line))
+    return ids
+
+
 def merge(existing: list[dict], parsed: list[dict]) -> tuple[list[dict], list[dict]]:
     by_id = {item["id"]: item for item in existing}
+    skip_ids = load_skip_ids()
     new_items: list[dict] = []
+    skipped_listed: list[int] = []
     for item in parsed:
         if item["id"] in by_id:
+            continue
+        if item["id"] in skip_ids:
+            skipped_listed.append(item["id"])
             continue
         item["caption"] = ""
         item["keywords"] = []
         rebuild_search(item)
         new_items.append(item)
         by_id[item["id"]] = item
+    if skipped_listed:
+        print(
+            "skipped listed ids: "
+            + ", ".join(str(i) for i in sorted(skipped_listed))
+        )
     merged = list(by_id.values())
     merged.sort(key=lambda row: (row["date"], row["id"]), reverse=True)
     return merged, new_items

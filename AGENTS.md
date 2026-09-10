@@ -19,11 +19,12 @@ Weekly loop (no `update.sh`):
    - makes thumbs for **new ids only**
    - copies those originals into `gallery/media/{id}{ext}`
    - merges new rows into the catalog
-4. You write captions + 3 keywords for the new ids only. Follow `tools/STYLE.md`. If the batch is large, split across subagents; if it is small, do it yourself.
+   - never catalogs the vault website itself (URL pins or screenshots of the gallery). Text-only links and Telegram pin service messages are already ignored. If a new media post is the site, do not add it: append its Telegram id to `tools/skip_ids.txt` (one id per line) and omit it from this batch
+4. You write captions + 3 keywords for the new ids only. Follow `tools/STYLE.md`. If the batch is large, split across subagents; if it is small, do it yourself. Look at each new image/video. If one is the gallery website, treat it as a skip (above), not a meme.
 5. Apply tags with `../venv/bin/python tools/update.py --apply path/to/tags.json` (skips ids that already have a caption or keywords). Any other Python (including `tools/build.py`) also uses `venv/bin/python`. Do not `pip install` on system Python.
 6. Stop. User checks, `git commit` / `git push` this `gallery/` repo, and deletes the Downloads export.
 
-Do **not**: replace `gallery/` or `venv/` with the dump, rewrite captions/keywords on existing ids, restyle `index.html` / `app.js` / `styles.css` unless asked, auto-commit, auto-push, or delete the Downloads folder. Do not edit dump dirs except via the snapshot replace.
+Do **not**: replace `gallery/` or `venv/` with the dump, rewrite captions/keywords on existing ids, restyle `index.html` / `app.js` / `styles.css` unless asked, auto-commit, auto-push, or delete the Downloads folder. Do not edit dump dirs except via the snapshot replace. Do not catalog the vault website (`titus-chua.github.io/jotchua-vault`) — pins, link posts, or screenshots of the gallery.
 
 `write_catalog` stamps `catalog.js?v=<max-id>` and `keywords.js?v=<max-id>` in `index.html` so a normal visit/reload gets new memes. The public Pages URL stays the repo root. Leave that stamp alone except via `update.py`.
 

@@ -60,6 +60,10 @@ AUDIO_RE = re.compile(
 TEXT_RE = re.compile(r'<div class="text">\s*(.*?)\s*</div>', re.S)
 TAG_RE = re.compile(r"<[^>]+>")
 BR_RE = re.compile(r"<br\s*/?>", re.I)
+VAULT_SITE_RE = re.compile(
+    r"titus-chua\.github\.io/jotchua-vault|github\.io/jotchua-vault",
+    re.I,
+)
 
 
 def strip_html(value: str) -> str:
@@ -106,6 +110,8 @@ def parse_messages(raw: str) -> list[dict]:
         date_label = date_m.group(1) if date_m else ""
         caption_m = TEXT_RE.search(part)
         caption = strip_html(caption_m.group(1)) if caption_m else ""
+        if VAULT_SITE_RE.search(part):
+            continue
 
         kind = None
         file_href = ""

@@ -1,0 +1,2 @@
+# Telegram message ids that are not memes (vault website pins/screenshots).
+# One id per line. Parser also skips messages that contain the vault URL.
