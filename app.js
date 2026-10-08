@@ -83,13 +83,22 @@
     return out;
   }
 
+  function termHits(term, haystack) {
+    const parts = term.split(/[^a-z0-9]+/).filter(Boolean);
+    if (!parts.length) return true;
+    const tokens = haystack.split(/[^a-z0-9]+/).filter(Boolean);
+    return parts.every((part) =>
+      tokens.some((token) => token === part || (part.length >= 3 && token.startsWith(part)))
+    );
+  }
+
   function matches(item, parsed, typeFilter, keywordFilter) {
     const type = parsed.type || typeFilter;
     if (type && type !== "all" && item.type !== type) return false;
     if (parsed.author && !item.author.toLowerCase().includes(parsed.author)) return false;
     const tag = parsed.tag || keywordFilter;
     if (tag && !item.keywords.includes(tag)) return false;
-    return parsed.terms.every((term) => item.haystack.includes(term));
+    return parsed.terms.every((term) => termHits(term, item.haystack));
   }
 
   function filter() {

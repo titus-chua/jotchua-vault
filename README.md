@@ -55,14 +55,14 @@ Open [http://localhost:8080/](http://localhost:8080/).
 
 ## Search
 
-- Free text matches id, author, date, filename, caption, and keywords
-- Try GIF-style words: `sleepy`, `cooking`, `angry`, `driving`, `naruto`
+- Free text matches id, author, date, filename, caption, and keywords, by whole word or the start of a word (`sleep` finds `sleepy`, `sydney` finds `sydney-sweeney`). A shorter word hidden inside another word does not match (`male` does not find `female`).
+- Try a feeling, a situation, or a thing in the picture: `emo`, `happy`, `female`, `sleepy`, `cooking`, `naruto`
 - `type:video`, `type:photo`, `type:sticker`
 - `author:kade`
 - `2026-07` for a month
 - `#1244` or `1244` for a message id
 
-Each item has a one-line caption plus 3 search keywords. The sidebar lists every keyword and its count. Click a keyword (or a tag in the lightbox) to filter.
+Each item has a caption plus the keywords someone might search, including feelings and situations when the meme fits them. The sidebar lists every keyword and its count. Click a keyword (or a tag in the lightbox) for an exact match.
 
 ## Weekly update
 
@@ -93,6 +93,6 @@ Any Python uses the parent `venv/`, not system Python:
 ../venv/bin/python tools/update.py
 ```
 
-New posts get a one-line caption and 3 keywords (`tools/STYLE.md`). Same idea → reuse the common existing word (`sleeping` → `sleepy`). A new subject gets a new word (`antman` is `antman`, not `batman`).
+New posts get a caption and keywords (`tools/STYLE.md`): a short concrete paragraph, and every fair search word, including synonym clusters when the feeling fits (`sleep`, `sleepy`, `sleeping`, `nap`, `tired`). A new subject gets its own word (`antman` is `antman`, not `batman`). Each new batch is written, reviewed, and reviewed again before it is applied.
 
 Do **not** run `tools/build.py` for weekly updates. That script is the original full rebuild.

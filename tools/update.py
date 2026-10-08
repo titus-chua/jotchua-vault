@@ -34,6 +34,7 @@ from build import ROOT, GALLERY, build_thumbs, copy_media, parse_messages, write
 
 DOWNLOADS = Path.home() / "Downloads"
 SKIP_IDS_PATH = Path(__file__).resolve().parent / "skip_ids.txt"
+BANNED_KEYWORDS = {"jotchua", "dog", "puppy", "meme", "crypto"}
 KEEP_NAMES = {"gallery", "venv", "AGENTS.md", ".git"}
 SNAPSHOT_DIRS = (
     "photos",
@@ -176,7 +177,23 @@ def merge(existing: list[dict], parsed: list[dict]) -> tuple[list[dict], list[di
     return merged, new_items
 
 
-def apply_tags(path: Path) -> None:
+def clean_keywords(item_id: int, raw) -> list[str]:
+    if not isinstance(raw, list):
+        raise SystemExit(f"id {item_id}: keywords must be a list")
+    keywords: list[str] = []
+    seen: set[str] = set()
+    for part in raw:
+        word = str(part).strip().lower()
+        if not word or word in seen:
+            continue
+        if word in BANNED_KEYWORDS:
+            raise SystemExit(f"id {item_id}: banned keyword {word}")
+        seen.add(word)
+        keywords.append(word)
+    return keywords
+
+
+def apply_tags(path: Path, overwrite: bool = False) -> None:
     rows = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(rows, list):
         raise SystemExit("tag file must be a JSON array")
@@ -190,29 +207,32 @@ def apply_tags(path: Path) -> None:
         try:
             item_id = int(row["id"])
         except (KeyError, TypeError, ValueError):
-            print(f"bad tag row: {row!r}", file=sys.stderr)
-            continue
+            raise SystemExit(f"bad tag row: {row!r}")
         item = by_id.get(item_id)
         if item is None:
             missing += 1
             print(f"missing id {item_id}", file=sys.stderr)
             continue
         already = bool(item.get("keywords")) or bool((item.get("caption") or "").strip())
-        if already:
+        if already and not overwrite:
             skipped += 1
             continue
-        item["caption"] = str(row.get("caption") or "").strip()
-        item["keywords"] = [
-            part.strip().lower()
-            for part in (row.get("keywords") or [])
-            if str(part).strip()
-        ]
+        caption = str(row.get("caption") or "").strip()
+        keywords = clean_keywords(item_id, row.get("keywords") or [])
+        if not caption or not keywords:
+            raise SystemExit(f"id {item_id}: caption and keywords are required")
+        item["caption"] = caption
+        item["keywords"] = keywords
         rebuild_search(item)
         updated += 1
 
+    if missing:
+        raise SystemExit(f"refusing to write: {missing} ids are not in the catalog")
+
     catalog.sort(key=lambda row: (row["date"], row["id"]), reverse=True)
     write_catalog(catalog)
-    print(f"applied tags: updated={updated} skipped_existing={skipped} missing={missing}")
+    mode = "overwrote" if overwrite else "applied"
+    print(f"{mode} tags: updated={updated} skipped_existing={skipped} missing={missing}")
     print(f"catalog: {len(catalog)} items")
 
 
@@ -311,6 +331,11 @@ def main() -> int:
         help="Fill caption/keywords on untagged ids only",
     )
     parser.add_argument(
+        "--overwrite",
+        metavar="TAGS.json",
+        help="Replace caption/keywords for ids in this file. Other ids stay as they are.",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Parse Downloads export and diff ids; do not copy or write",
@@ -322,8 +347,15 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    if args.apply and args.overwrite:
+        raise SystemExit("use either --apply or --overwrite, not both")
+
+    if args.overwrite:
+        apply_tags(Path(args.overwrite).expanduser().resolve(), overwrite=True)
+        return 0
+
     if args.apply:
-        apply_tags(Path(args.apply).expanduser().resolve())
+        apply_tags(Path(args.apply).expanduser().resolve(), overwrite=False)
         return 0
 
     if args.sync_media:
