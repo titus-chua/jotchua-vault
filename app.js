@@ -60,10 +60,22 @@
     index: -1,
     mediaGen: 0,
     copyTimer: 0,
+    shareJob: null,
+    shareBypass: false,
   };
 
   const IMAGE_TYPES = new Set(["photo", "sticker"]);
   const IMAGE_EXT = /\.(png|jpe?g|gif|webp)$/i;
+  const PHOTOS_MIME = {
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    gif: "image/gif",
+    webp: "image/webp",
+    mp4: "video/mp4",
+    mov: "video/quicktime",
+    m4v: "video/mp4",
+  };
 
   function esc(value) {
     return String(value)
@@ -157,7 +169,106 @@
     if (els.copy) els.copy.textContent = "Copy";
   }
 
+  function fileExt(item) {
+    const name = String(item?.filename || item?.src || "");
+    const base = name.split("?")[0].split("#")[0];
+    const dot = base.lastIndexOf(".");
+    return dot >= 0 ? base.slice(dot + 1).toLowerCase() : "";
+  }
+
+  function photosMime(item) {
+    return PHOTOS_MIME[fileExt(item)] || "";
+  }
+
+  function isIphone() {
+    return /iPhone/.test(navigator.userAgent || "");
+  }
+
+  // Save Image and Save Video only appear when share() runs inside the tap.
+  function wantsPhotosShare(item) {
+    return isIphone() && !!photosMime(item) && !!mediaUrl(item) && typeof navigator.share === "function";
+  }
+
+  function setDownloadWaiting(waiting) {
+    if (!els.download) return;
+    els.download.classList.toggle("is-waiting", waiting);
+    if (waiting) els.download.setAttribute("aria-disabled", "true");
+    else els.download.removeAttribute("aria-disabled");
+  }
+
+  function clearShare() {
+    const job = state.shareJob;
+    if (!job) return;
+    state.shareJob = null;
+    job.ctrl.abort();
+  }
+
+  function shareCancelled(err) {
+    if (err && err.name === "AbortError") return true;
+    const msg = String(err && err.message || "").toLowerCase();
+    return msg.includes("cancel") || msg.includes("abort");
+  }
+
+  function sharePreparedFile(file) {
+    let pending;
+    try {
+      pending = navigator.share({ files: [file] });
+    } catch (err) {
+      if (shareCancelled(err)) return;
+      state.shareBypass = true;
+      if (els.download) els.download.click();
+      return;
+    }
+    if (els.download) els.download.textContent = "Download";
+    Promise.resolve(pending).catch((err) => {
+      if (shareCancelled(err)) return;
+    });
+  }
+
+  function prepareShare(item, gen) {
+    clearShare();
+    if (!wantsPhotosShare(item)) {
+      setDownloadWaiting(false);
+      return;
+    }
+    const ctrl = new AbortController();
+    const job = { gen, ctrl, file: null, failed: false };
+    state.shareJob = job;
+    setDownloadWaiting(true);
+    const type = photosMime(item);
+    const name = item.filename || `${item.id}`;
+    fetch(mediaUrl(item), { signal: ctrl.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error("fetch");
+        return res.blob();
+      })
+      .then((blob) => {
+        if (state.shareJob !== job) return;
+        const file = new File([blob], name, { type });
+        let ok = true;
+        try {
+          ok = !navigator.canShare || navigator.canShare({ files: [file] });
+        } catch {
+          ok = false;
+        }
+        if (!ok) {
+          job.failed = true;
+          setDownloadWaiting(false);
+          return;
+        }
+        job.file = file;
+        setDownloadWaiting(false);
+      })
+      .catch((err) => {
+        if (state.shareJob !== job) return;
+        if (err && err.name === "AbortError") return;
+        job.failed = true;
+        setDownloadWaiting(false);
+      });
+  }
+
   function stopMedia() {
+    clearShare();
     state.mediaGen += 1;
     for (const player of els.media.querySelectorAll("video, audio")) {
       try {
@@ -389,6 +500,7 @@
     }
     const url = mediaUrl(item);
     if (els.download) {
+      els.download.textContent = "Download";
       els.download.href = url || item.telegram;
       els.download.setAttribute("download", item.filename || String(item.id));
       if (url) els.download.removeAttribute("target");
@@ -397,6 +509,7 @@
         els.download.removeAttribute("download");
       }
     }
+    prepareShare(item, gen);
     els.telegram.href = item.telegram;
     els.telegram.textContent = "Open in Telegram";
     els.lightbox.classList.remove("hidden");
@@ -624,6 +737,20 @@
     const scroller = scrollablePopup(event.target);
     if (!scroller || atScrollEdge(scroller, event.deltaY)) event.preventDefault();
   }, { passive: false });
+  if (els.download) {
+    els.download.addEventListener("click", (event) => {
+      if (state.shareBypass) {
+        state.shareBypass = false;
+        return;
+      }
+      const item = state.visible[state.index];
+      if (!wantsPhotosShare(item)) return;
+      const job = state.shareJob;
+      if (!job || job.gen !== state.mediaGen || job.failed) return;
+      event.preventDefault();
+      if (job.file) sharePreparedFile(job.file);
+    });
+  }
   els.media.addEventListener("click", (event) => {
     if (!event.target.closest("[data-download]")) return;
     triggerDownload();

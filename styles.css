@@ -585,6 +585,12 @@ button.tag:focus-visible {
   font-weight: 650;
 }
 
+.btn.is-waiting {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: default;
+}
+
 .lb-close, .lb-nav {
   border: 0;
   background: rgba(34, 28, 22, 0.9);
