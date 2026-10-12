@@ -14,15 +14,23 @@
         <h2>Keywords</h2>
         <button type="button" class="kw-close" id="kw-close" aria-label="Close keywords">×</button>
       </div>
-      <input id="kw-filter" type="search" placeholder="Filter keywords…" autocomplete="off" spellcheck="false">
-      <button type="button" class="kw-clear hidden" id="kw-clear">Clear keyword</button>
+      <div class="kw-filter-wrap">
+        <input id="kw-filter" type="search" placeholder="Filter keywords…" autocomplete="off" spellcheck="false">
+        <button type="button" class="field-clear" id="kw-filter-clear" aria-label="Clear keywords">
+          <svg viewBox="0 0 16 16" aria-hidden="true" width="14" height="14">
+            <path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
       <div id="kw-list" class="kw-list" role="listbox" aria-label="Keyword filters"></div>
     </aside>
 
     <div class="stage">
       <header class="top">
         <div class="brand">
-          <img class="avatar" src="avatar.jpg" alt="Jotchua" width="48" height="48">
+          <button type="button" class="logo" id="logo" aria-label="Home">
+            <img class="avatar" src="avatar.jpg" alt="" width="48" height="48">
+          </button>
           <div>
             <h1>Jotchua Content</h1>
             <p class="tagline">
@@ -34,6 +42,11 @@
         <label class="search-wrap">
           <span class="sr-only">Search</span>
           <input id="q" type="search" placeholder="Search id, author, date, caption, keywords…" autocomplete="off" spellcheck="false">
+          <button type="button" class="field-clear" id="q-clear" aria-label="Clear search">
+            <svg viewBox="0 0 16 16" aria-hidden="true" width="14" height="14">
+              <path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </button>
         </label>
         <div class="toolbar">
           <button type="button" class="chip kw-open" id="kw-open">Keywords</button>
@@ -63,12 +76,14 @@
     <div class="lb-card">
       <div class="lb-media" id="lb-media"></div>
       <div class="lb-meta">
-        <h2 id="lb-title"></h2>
-        <p class="lb-sub" id="lb-sub"></p>
-        <p class="lb-caption" id="lb-caption"></p>
-        <div class="lb-keywords">
-          <h3>Keywords</h3>
-          <div id="lb-tags"></div>
+        <div class="lb-copy">
+          <h2 id="lb-title"></h2>
+          <p class="lb-sub" id="lb-sub"></p>
+          <p class="lb-caption" id="lb-caption"></p>
+          <div class="lb-keywords">
+            <h3>Keywords</h3>
+            <div id="lb-tags"></div>
+          </div>
         </div>
         <div class="lb-actions">
           <a id="lb-download" class="btn primary">Download</a>

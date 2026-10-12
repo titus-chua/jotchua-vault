@@ -74,9 +74,13 @@ body {
 
 .kw-close, .kw-open { display: none; }
 
-#kw-filter {
+.kw-filter-wrap {
+  position: relative;
   margin: 0 12px 8px;
-  width: calc(100% - 24px);
+}
+
+#kw-filter {
+  width: 100%;
   border: 1px solid var(--line);
   background: var(--bg);
   color: var(--ink);
@@ -84,20 +88,11 @@ body {
   padding: 8px 12px;
   font: inherit;
   outline: none;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 #kw-filter:focus { border-color: var(--gold); }
-
-.kw-clear {
-  margin: 0 12px 8px;
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--gold-2);
-  border-radius: 999px;
-  padding: 6px 10px;
-  font: inherit;
-  cursor: pointer;
-}
 
 .kw-list {
   overflow: auto;
@@ -178,6 +173,22 @@ code {
   align-items: center;
 }
 
+.logo {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  line-height: 0;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.logo:focus-visible {
+  outline: 2px solid var(--gold-2);
+  outline-offset: 3px;
+}
+
 .avatar {
   width: 48px;
   height: 48px;
@@ -198,7 +209,42 @@ h1 {
   font-size: 0.88rem;
 }
 
-.search-wrap { display: block; margin: 14px 0 10px; }
+.search-wrap {
+  display: block;
+  position: relative;
+  margin: 14px 0 10px;
+}
+
+.field-clear {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 36px;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.field-clear:hover,
+.field-clear:focus-visible { color: var(--ink); }
+
+#q:placeholder-shown + .field-clear,
+#kw-filter:placeholder-shown + .field-clear { display: none; }
+
+#q::-webkit-search-cancel-button,
+#kw-filter::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+#q:not(:placeholder-shown),
+#kw-filter:not(:placeholder-shown) { padding-right: 36px; }
 
 #q {
   width: 100%;
@@ -209,6 +255,8 @@ h1 {
   padding: 12px 18px;
   font-size: 1rem;
   outline: none;
+  -webkit-appearance: none;
+  appearance: none;
   -webkit-text-fill-color: var(--ink);
 }
 
@@ -321,6 +369,19 @@ h1 {
 
 .hidden { display: none !important; }
 
+html.lb-open,
+html.lb-open body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+html.lb-open body {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
 .lightbox {
   position: fixed;
   inset: 0;
@@ -331,6 +392,7 @@ h1 {
   align-items: center;
   gap: 8px;
   padding: 18px;
+  overscroll-behavior: none;
 }
 
 .lb-card {
@@ -338,7 +400,9 @@ h1 {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: auto;
+  overscroll-behavior: contain;
   max-height: calc(100vh - 36px);
+  max-height: calc(100dvh - 36px);
   box-shadow: 0 24px 80px var(--shadow);
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(240px, 0.8fr);
@@ -377,6 +441,7 @@ h1 {
   height: auto;
   max-width: 100%;
   max-height: min(78vh, 860px);
+  max-height: min(78dvh, 860px);
   display: block;
   object-fit: contain;
 }
@@ -618,8 +683,11 @@ button.tag:focus-visible {
   .lb-meta {
     flex: 1 1 auto;
     min-height: 0;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
+  .lightbox { touch-action: pan-y; }
   .lb-nav { display: none; }
   .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; padding: 10px; }
 }
@@ -639,7 +707,23 @@ button.tag:focus-visible {
     max-height: 100dvh;
     border-radius: 0;
   }
-  .lb-meta { padding-bottom: calc(22px + env(safe-area-inset-bottom)); }
+  .lb-meta {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .lb-copy {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .lb-actions {
+    flex: 0 0 auto;
+    margin-top: 8px;
+  }
   .lb-close {
     top: max(10px, env(safe-area-inset-top));
     right: max(10px, env(safe-area-inset-right));
@@ -647,6 +731,161 @@ button.tag:focus-visible {
   .foot { padding-bottom: 24px; }
 }
 
-@media (max-width: 900px) and (orientation: landscape) {
-  .lb-media { height: clamp(120px, 46dvh, 220px); }
+/* Short landscape (phones, including wide ones) and any landscape narrow
+   enough to stack: photo on the left at full height, details scroll on the
+   right. Portrait stays stacked. iPad landscape is taller than this and
+   keeps the desktop side-by-side layout. */
+@media (orientation: landscape) and (max-height: 560px),
+       (orientation: landscape) and (max-width: 900px) {
+  .lightbox {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    justify-items: stretch;
+    gap: 0;
+    padding: 0;
+  }
+  .lightbox { touch-action: pan-y; }
+  .lb-nav { display: none; }
+  .lb-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(248px, min(340px, 40%));
+    grid-template-rows: minmax(0, 1fr);
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    min-height: 0;
+    border-radius: 0;
+    overflow: hidden;
+  }
+  .lb-media {
+    position: relative;
+    display: block;
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+    max-height: none;
+    overflow: hidden;
+  }
+  .lb-stage,
+  .lb-stage.audio,
+  .lb-stage.file {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .lb-media img.lb-full,
+  .lb-media img.lb-poster,
+  .lb-media video {
+    position: absolute;
+    top: 0;
+    left: env(safe-area-inset-left);
+    width: calc(100% - env(safe-area-inset-left));
+    height: calc(100% - env(safe-area-inset-bottom));
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    object-fit: contain;
+  }
+  .lb-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 12px 14px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-right: 14px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .lb-copy {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: max(44px, env(safe-area-inset-right));
+  }
+  .lb-actions {
+    flex: 0 0 auto;
+    margin-top: 8px;
+  }
+  .lb-actions .btn {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .lb-close {
+    top: max(8px, env(safe-area-inset-top));
+    right: max(8px, env(safe-area-inset-right));
+    z-index: 2;
+  }
+}
+
+/* Phone landscape home: one short bar, then the meme grid. Portrait and
+   iPad landscape stay on the stacked header. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .shell { min-height: 100dvh; }
+  .top {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand search keywords"
+      "filters filters filters";
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 6px;
+    padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 6px max(8px, env(safe-area-inset-left));
+  }
+  .toolbar { display: contents; }
+  .brand { grid-area: brand; gap: 0; }
+  .brand h1,
+  .brand .tagline { display: none; }
+  .avatar { width: 32px; height: 32px; border-width: 1px; }
+  .search-wrap { grid-area: search; margin: 0; min-width: 0; }
+  #q { font-size: 16px; padding: 7px 12px; }
+  #kw-open { grid-area: keywords; }
+  .filters {
+    grid-area: filters;
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .filters .chip { flex: 0 0 auto; }
+  .status { display: none; }
+  .foot { display: none; }
+  .kw-side {
+    height: 100dvh;
+    max-height: 100dvh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+  }
+  .kw-head { padding: 6px 8px 2px; }
+  .kw-filter-wrap { margin-bottom: 4px; }
+  #kw-filter { padding: 8px 12px; font-size: 16px; }
+  .kw-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding-bottom: 8px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) and (max-width: 900px) {
+  .kw-side { width: min(280px, 46vw); }
+}
+
+@media (orientation: landscape) and (max-height: 560px) and (min-width: 901px) {
+  .top {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "brand search"
+      "filters filters";
+  }
 }

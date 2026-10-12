@@ -42,10 +42,12 @@
     kwSide: document.getElementById("kw-side"),
     kwList: document.getElementById("kw-list"),
     kwFilter: document.getElementById("kw-filter"),
-    kwClear: document.getElementById("kw-clear"),
+    kwFilterClear: document.getElementById("kw-filter-clear"),
+    qClear: document.getElementById("q-clear"),
     kwOpen: document.getElementById("kw-open"),
     kwClose: document.getElementById("kw-close"),
     kwMask: document.getElementById("kw-mask"),
+    logo: document.getElementById("logo"),
   };
 
   const TYPES = ["all", "photo", "video", "sticker", "file", "audio"];
@@ -205,7 +207,6 @@
         </button>`;
       })
       .join("");
-    els.kwClear.classList.toggle("hidden", !state.keyword);
     if (els.kwOpen) {
       els.kwOpen.textContent = state.keyword ? `Keywords · ${state.keyword}` : "Keywords";
       els.kwOpen.classList.toggle("active", Boolean(state.keyword));
@@ -322,6 +323,46 @@
     </div>`;
   }
 
+  let lockedScrollY = 0;
+  let pageLocked = false;
+
+  function lockPage() {
+    if (pageLocked) return;
+    lockedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    const gap = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.top = `-${lockedScrollY}px`;
+    document.body.style.paddingRight = gap > 0 ? `${gap}px` : "";
+    document.documentElement.classList.add("lb-open");
+    pageLocked = true;
+  }
+
+  function unlockPage() {
+    if (!pageLocked) return;
+    const y = lockedScrollY;
+    document.documentElement.classList.remove("lb-open");
+    document.body.style.top = "";
+    document.body.style.paddingRight = "";
+    pageLocked = false;
+    window.scrollTo(0, y);
+  }
+
+  function scrollablePopup(target) {
+    let el = target instanceof Element ? target : null;
+    while (el && els.lightbox.contains(el)) {
+      const style = getComputedStyle(el);
+      const canScroll = style.overflowY === "auto" || style.overflowY === "scroll";
+      if (canScroll && el.scrollHeight > el.clientHeight + 1) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  function atScrollEdge(el, deltaY) {
+    if (deltaY < 0 && el.scrollTop <= 0) return true;
+    if (deltaY > 0 && el.scrollTop + el.clientHeight >= el.scrollHeight - 1) return true;
+    return false;
+  }
+
   function openAt(index) {
     if (index < 0 || index >= state.visible.length) return;
     stopMedia();
@@ -359,7 +400,11 @@
     els.telegram.href = item.telegram;
     els.telegram.textContent = "Open in Telegram";
     els.lightbox.classList.remove("hidden");
-    location.hash = String(item.id);
+    els.lightbox.querySelectorAll(".lb-card, .lb-meta, .lb-copy").forEach((el) => {
+      el.scrollTop = 0;
+    });
+    lockPage();
+    syncUrl();
   }
 
   function closeLightbox() {
@@ -367,7 +412,8 @@
     resetCopyLabel();
     state.index = -1;
     els.lightbox.classList.add("hidden");
-    if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+    unlockPage();
+    syncUrl({ dropHash: true });
   }
 
   function triggerDownload() {
@@ -406,18 +452,24 @@
     await navigator.clipboard.writeText(url);
   }
 
-  function syncUrl() {
+  function syncUrl(options) {
     const params = new URLSearchParams();
     if (state.query) params.set("q", state.query);
     if (state.type !== "all") params.set("type", state.type);
     if (state.keyword) params.set("tag", state.keyword);
     const qs = params.toString();
-    const hash =
-      state.index >= 0
-        ? String(state.visible[state.index].id)
-        : location.hash.replace(/^#/, "");
+    let hash = "";
+    if (!options?.dropHash) {
+      if (state.index >= 0 && state.visible[state.index]) hash = String(state.visible[state.index].id);
+      else hash = location.hash.replace(/^#/, "");
+    }
     const next = `${location.pathname}${qs ? `?${qs}` : ""}${hash ? `#${hash}` : ""}`;
     history.replaceState(null, "", next);
+  }
+
+  function restoreSearchFields() {
+    if (els.q.value !== state.query) els.q.value = state.query;
+    if (els.kwFilter.value !== state.kwQuery) els.kwFilter.value = state.kwQuery;
   }
 
   function openFromHash() {
@@ -427,9 +479,51 @@
     if (index >= 0) openAt(index);
   }
 
+  els.logo.addEventListener("click", () => {
+    if (location.search || location.hash) {
+      location.assign(location.pathname);
+      return;
+    }
+    state.kwQuery = "";
+    els.kwFilter.value = "";
+    renderKeywords();
+    closeKwDrawer();
+    window.scrollTo(0, 0);
+  });
+
+  function clearInput(input) {
+    input.value = "";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  els.qClear.addEventListener("pointerdown", () => {
+    els.qClear.dataset.keepFocus = document.activeElement === els.q ? "1" : "";
+  });
+  els.qClear.addEventListener("click", () => {
+    const keepFocus = els.qClear.dataset.keepFocus === "1";
+    delete els.qClear.dataset.keepFocus;
+    clearInput(els.q);
+    if (keepFocus) els.q.focus();
+  });
+  els.kwFilterClear.addEventListener("pointerdown", () => {
+    els.kwFilterClear.dataset.keepFocus = document.activeElement === els.kwFilter ? "1" : "";
+  });
+  els.kwFilterClear.addEventListener("click", () => {
+    const keepFocus = els.kwFilterClear.dataset.keepFocus === "1";
+    delete els.kwFilterClear.dataset.keepFocus;
+    clearInput(els.kwFilter);
+    if (keepFocus) els.kwFilter.focus();
+  });
+
   els.q.addEventListener("input", () => {
     state.query = els.q.value;
     filter();
+  });
+  els.q.addEventListener("focus", restoreSearchFields);
+  els.kwFilter.addEventListener("focus", restoreSearchFields);
+  window.addEventListener("pageshow", () => {
+    restoreSearchFields();
+    setTimeout(restoreSearchFields, 0);
   });
 
   els.filters.addEventListener("click", (event) => {
@@ -456,7 +550,6 @@
     renderKeywords();
   });
 
-  els.kwClear.addEventListener("click", () => setKeyword(""));
   els.kwOpen.addEventListener("click", openKwDrawer);
   els.kwClose.addEventListener("click", closeKwDrawer);
   els.kwMask.addEventListener("click", closeKwDrawer);
@@ -480,6 +573,57 @@
   els.lightbox.addEventListener("click", (event) => {
     if (event.target === els.lightbox) closeLightbox();
   });
+  let popupTouchY = 0;
+  let swipe = null;
+
+  function arrowsHidden() {
+    return getComputedStyle(els.prev).display === "none";
+  }
+
+  els.lightbox.addEventListener("touchstart", (event) => {
+    if (event.touches.length) popupTouchY = event.touches[0].clientY;
+  }, { passive: true });
+  els.lightbox.addEventListener("touchmove", (event) => {
+    if (!pageLocked || !event.touches.length) return;
+    const y = event.touches[0].clientY;
+    const delta = popupTouchY - y;
+    popupTouchY = y;
+    const scroller = scrollablePopup(event.target);
+    if (!scroller || atScrollEdge(scroller, delta)) event.preventDefault();
+  }, { passive: false });
+  els.lightbox.addEventListener("pointerdown", (event) => {
+    if (!pageLocked || !event.isPrimary || !arrowsHidden()) {
+      swipe = null;
+      return;
+    }
+    swipe = { x: event.clientX, y: event.clientY, axis: "", id: event.pointerId };
+  });
+  els.lightbox.addEventListener("pointermove", (event) => {
+    if (!swipe || event.pointerId !== swipe.id) return;
+    const dx = event.clientX - swipe.x;
+    const dy = event.clientY - swipe.y;
+    if (!swipe.axis && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) {
+      swipe.axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? "x" : "y";
+    }
+    if (swipe.axis === "x") event.preventDefault();
+  });
+  els.lightbox.addEventListener("pointerup", (event) => {
+    if (!swipe || event.pointerId !== swipe.id) return;
+    const dx = event.clientX - swipe.x;
+    const dy = event.clientY - swipe.y;
+    const axis = swipe.axis;
+    swipe = null;
+    if (axis !== "x" || Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy)) return;
+    openAt(state.index + (dx < 0 ? 1 : -1));
+  });
+  els.lightbox.addEventListener("pointercancel", () => {
+    swipe = null;
+  });
+  els.lightbox.addEventListener("wheel", (event) => {
+    if (!pageLocked) return;
+    const scroller = scrollablePopup(event.target);
+    if (!scroller || atScrollEdge(scroller, event.deltaY)) event.preventDefault();
+  }, { passive: false });
   els.media.addEventListener("click", (event) => {
     if (!event.target.closest("[data-download]")) return;
     triggerDownload();
