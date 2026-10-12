@@ -373,6 +373,8 @@ h1 {
 
 .lb-media img,
 .lb-media video {
+  width: auto;
+  height: auto;
   max-width: 100%;
   max-height: min(78vh, 860px);
   display: block;
@@ -383,11 +385,21 @@ h1 {
   width: min(100%, 420px);
 }
 
-.lb-poster,
+/* Thumb overlays the full frame and must not reserve a square box. */
+.lb-media img.lb-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  object-fit: contain;
+  cursor: default;
+}
+
 .lb-full {
   grid-area: 1 / 1;
-  width: 100%;
-  height: auto;
   cursor: default;
 }
 
@@ -561,8 +573,53 @@ button.tag:focus-visible {
     z-index: 5;
   }
   .kw-item { min-height: 44px; align-items: center; padding: 10px 12px; }
-  .lb-card { grid-template-columns: 1fr; }
-  .lightbox { grid-template-columns: 1fr; padding: 10px; }
+  .lightbox {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    padding: 10px;
+  }
+  .lb-card {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 20px);
+    min-height: 0;
+    overflow: hidden;
+  }
+  .lb-media {
+    display: flex;
+    flex: 0 0 auto;
+    height: clamp(180px, 52dvh, 70dvh);
+    min-height: 0;
+    overflow: hidden;
+  }
+  .lb-stage {
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .lb-stage.audio,
+  .lb-stage.file {
+    min-height: 0;
+    height: 100%;
+  }
+  .lb-media img.lb-full,
+  .lb-media video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    object-fit: contain;
+  }
+  .lb-meta {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+  }
   .lb-nav { display: none; }
   .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; padding: 10px; }
 }
@@ -576,14 +633,20 @@ button.tag:focus-visible {
   #q, #kw-filter { font-size: 16px; padding: 11px 14px; }
   .chip { padding: 8px 12px; }
   .grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; padding: 8px; }
-  .lightbox { padding: 0; align-items: stretch; }
+  .lightbox { padding: 0; }
   .lb-card {
+    height: 100dvh;
     max-height: 100dvh;
     border-radius: 0;
-    min-height: 100dvh;
   }
-  .lb-media, .lb-stage { min-height: 42vw; }
-  .lb-media img, .lb-media video { max-height: 48dvh; }
-  .lb-close { top: 10px; right: 10px; }
+  .lb-meta { padding-bottom: calc(22px + env(safe-area-inset-bottom)); }
+  .lb-close {
+    top: max(10px, env(safe-area-inset-top));
+    right: max(10px, env(safe-area-inset-right));
+  }
   .foot { padding-bottom: 24px; }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .lb-media { height: clamp(120px, 46dvh, 220px); }
 }

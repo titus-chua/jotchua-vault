@@ -19,15 +19,15 @@ The dog is Jotchua (yellow lab puppy). You MAY say Jotchua in the caption. Do NO
 - As many as are fair. Usually about 8–25. Every word must be something a person might type. No filler and no repeats.
 - Lowercase. Multi-word tags are hyphenated: `thumbs-up`, `down-bad`, `sydney-sweeney`.
 - Store one hyphenated form for a name or phrase. Write the spaced name in the caption. Do not also add the smashed form (`sydneysweeney`, `downbad`) or the separate pieces (`sydney`, `sweeney`). The search box already matches those pieces.
-- Do not add bare `bad`, `up`, `big`, or `new`. They are too wide to click. `down` is only allowed as part of the sad cluster below.
+- `bad`, `up`, `big`, `new`, `down`, and `huge` are allowed when the picture is actually about that. An arrow pointing up gets `up`. An arrow pointing down gets `down`. A subject the meme calls huge gets `big` or `huge`. Do not add them as filler.
 
 ### Clusters
 
-The sidebar is an exact match, so synonyms that are not the start of the same word have to be stored (`nap` is not `sleepy`, `emo` is not `sad`, `woman` is not `female`).
+The sidebar is an exact match, so synonyms that are not the start of the same word have to be stored (`nap` is not `sleepy`, `emo` is not `sad`).
 
 Apply a cluster only when someone in the chat would actually send this meme for that situation. A costume with no mood gets no mood cluster. If one word from a cluster fits, add the whole cluster.
 
-- Sad: `sad`, `upset`, `down`, `depressed`, `emo`, `down-bad`, `lonely`. Also add `crying`, `tears`, `sobbing` when crying is visible or it is a crying reaction.
+- Sad: `sad`, `upset`, `depressed`, `emo`, `down-bad`, `lonely`. Also add `crying`, `tears`, `sobbing` when crying is visible or it is a crying reaction. Bare `down` is not part of this cluster.
 - Happy: `happy`, `smile`, `smiling`, `joy`, `excited`, `wholesome`. Also add `laughing`, `lol` when someone is laughing.
 - Angry: `angry`, `mad`, `rage`, `pissed`, `annoyed`.
 - Good market / flex: `winning`, `success`, `bullish`, `moon`, `pump`, `rich`. Also add `money`, `cash`, `wealth` when money or riches are the joke.
@@ -35,10 +35,31 @@ Apply a cluster only when someone in the chat would actually send this meme for 
 - Sleep: `sleep`, `sleepy`, `sleeping`, `nap`, `tired`. Also add `bedtime` when it is bed or night.
 - Love: `love`, `heart`, `crush`. Add `cute` only when it is actually cute.
 - Scared: `scared`, `fear`, `horror`, `creepy`.
-- A woman is a salient subject: `woman`, `female`. Add `girl` only when she reads as a girl rather than an adult.
-- A man is a salient human subject (not Jotchua): `man`, `male`. Add `guy` when that is how someone would search.
 
-Use words people type. Skip thesaurus words (`melancholy`, `pensive`, `whimsical`, `lugubrious`).
+`female` means Jotchua himself is styled as a girl. A small girl marker is enough. Any one of these on him counts: a bow, ribbon, or clip in the hair; blush or girl makeup on the cheeks, including drawn or sticker blush; a dress, skirt, maid outfit, tiara, or other girl costume; Hello Kitty or another girl character costume; his head on a woman's body. Posts 1714 and 1553 are the hair bow. Post 1544 is blush on the cheeks. Posts 1404 and 1633 are Hello Kitty. A plain puppy is not `female`. A bow tie, a weapon bow, bows on a tree, clown paint, and the color pink by itself are not `female`. A human woman beside him is not `female` unless he is the one styled as a girl. The caption can still name the person.
+
+A guy look is not `female`, and it gets no gender keyword. Post 195 is a guy: gray wig, sunglasses, a Gadsden hat, and a Stop Being Poor tank. Long hair, a wig, braids, or a mullet with guy clothes is the same. Do not use `guy` or `male`. A plain puppy gets no gender keyword. Do not tag `man`, `woman`, `guy`, or `girl` for anyone in the frame.
+
+### Mature
+
+The vault is adults. Tag the sexual thing with the word a person would type. Do not hide it behind a softer word and stop. These are the bar, not a closed list.
+
+- Breasts, cleavage, or a neckline that is the joke: `tits` and `boobs`. Also `cleavage` when the cleavage shows. Post 1898 is Sydney Sweeney's tits. Do not stop at `cleavage` or `neckline`. Do not add `female` or `woman` for her. Keep `sydney-sweeney`.
+- Tag `dick`, `boner`, and `horny` only when the meme is about that. An erection, or a blanket, sheet, or towel tented by one: `boner` and `dick`, plus `horny`. Post 398 is the nap cartoon whose blanket is tented. Post 2043 is the belly photo with the dick in front. Do not rename a penis to a paw, a tail, a fold, a stain, a mark, or part of the belly. Do not leave the caption as only a nap or a full belly when the dick is the point.
+- A penis that only happens to show is not a dick post. Posts 1774, 1754, 1753, 1599, and 1524 are Faygo, a rocket, sushi, Cupid, and morning coffee. Leave them on that joke. Do not add `dick`, and do not add a dick clause to the caption.
+- Do not use `nude` as a keyword. Jotchua is usually unclothed, so the word does not separate posts.
+- A sexual word printed on the image is a keyword, even when the picture is not a sex scene. Post 531 is `rape`. The tier-list rows on 266 and 662 include `wank` and `hoes`. Do not leave the word only in the caption.
+- A sex toy: the object word (`dildo`, `sex-toy`, or whatever it is). Add `horny` when that is the send.
+- A butt that is the joke: `butt`. Add `big` or `huge` when the size is the joke.
+- `sexy`, `nsfw`, `seduction`, and any other fitting sexual word can sit with the body word. Do not paste them onto a post that is not about that.
+
+Not a mature post: a normal nap, a chubby belly with no penis, a penis that only happens to show, a gym shirtless shot, a tongue blep, or a bikini that is only a beach costume. Jotchua with no clothes is not a `nude` tag. Shirtless, tongue-out, and a gym flex can still take `sexy` or `seduction` when that pose is the seduction, and they keep the plain words too.
+
+A post that sexualizes a child gets no sexual keywords.
+
+If the caption hides the mature point, keep the rest of it and add one plain clause that names the thing.
+
+Skip thesaurus words (`melancholy`, `pensive`, `whimsical`, `lugubrious`).
 
 ### Specific words
 
@@ -76,4 +97,4 @@ Look at the media three times before `update.py --apply`:
 2. Review the file against the picture. Fix anything missing or unfair.
 3. Review the edited file the same way. Fix again if needed.
 
-Checklist each pass: visible facts, usable-meme test, full cluster when one word fits, no banned keywords, no invented character, no smashed duplicate of a hyphenated name.
+Checklist each pass: visible facts, usable-meme test, full cluster when one word fits, no banned keywords, no invented character, no smashed duplicate of a hyphenated name. Mature words only when the meme is about that thing. Breasts that are the joke get `tits` and `boobs`. `dick`, `boner`, and `horny` only when the meme is about that, not when a penis only happens to show. No `nude` keyword. A sexual word printed on the image is a keyword. `female` when Jotchua is styled as a girl, including a hair bow, cheek blush, or a girl costume. A guy look is not `female` and gets no gender keyword. No `guy`, `male`, `man`, `woman`, or `girl`. A post that sexualizes a child gets no sexual keywords.

@@ -12,10 +12,10 @@ import sys
 from pathlib import Path
 
 GALLERY = Path(__file__).resolve().parent.parent
-BANNED = {"jotchua", "dog", "puppy", "meme", "crypto", "bad", "up", "big", "new"}
+BANNED = {"jotchua", "dog", "puppy", "meme", "crypto"}
 
 CLUSTERS = {
-    "sad": ["sad", "upset", "down", "depressed", "emo", "down-bad", "lonely"],
+    "sad": ["sad", "upset", "depressed", "emo", "down-bad", "lonely"],
     "happy": ["happy", "smile", "smiling", "joy", "excited", "wholesome"],
     "angry": ["angry", "mad", "rage", "pissed", "annoyed"],
     "flex": ["winning", "success", "bullish", "moon", "pump", "rich"],
@@ -23,8 +23,6 @@ CLUSTERS = {
     "sleep": ["sleep", "sleepy", "sleeping", "nap", "tired"],
     "love": ["love", "heart", "crush"],
     "scared": ["scared", "fear", "horror", "creepy"],
-    "woman": ["woman", "female"],
-    "man": ["man", "male"],
 }
 IMPLIES = {
     "crying": ["crying", "tears", "sobbing", *CLUSTERS["sad"]],
@@ -36,8 +34,6 @@ IMPLIES = {
     "cash": ["money", "cash", "wealth"],
     "wealth": ["money", "cash", "wealth"],
     "bedtime": [*CLUSTERS["sleep"], "bedtime"],
-    "girl": [*CLUSTERS["woman"], "girl"],
-    "guy": [*CLUSTERS["man"], "guy"],
 }
 
 

@@ -88,7 +88,7 @@
     if (!parts.length) return true;
     const tokens = haystack.split(/[^a-z0-9]+/).filter(Boolean);
     return parts.every((part) =>
-      tokens.some((token) => token === part || (part.length >= 3 && token.startsWith(part)))
+      tokens.some((token) => token === part || token.startsWith(part))
     );
   }
 
